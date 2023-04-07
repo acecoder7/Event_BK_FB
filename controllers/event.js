@@ -5,13 +5,26 @@ import firebase from 'firebase/compat/app';
 
 import firestore from '../db.js';
 
+import cloudinary from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 
 
 //CREATE EVENT 
 export const addEvent = async (req, res) => {
     try{
-        const data = req.body;
-        await firestore.collection('events').doc().set(data);
+        const eventData = req.body;
+        const image = req.files.image;
+        // Upload image to Cloudinary
+        const cloudinaryResult = await cloudinary.uploader.upload(image.path);
+        eventData.image_url = cloudinaryResult.secure_url;
+
+        await firestore.collection('events').doc().set(eventData);
         res.send('Event Added');
     } catch (error) {
         res.status(400).send(error.message)
@@ -74,8 +87,15 @@ export const getEvent = async (req, res) => {
 export const updateEvent = async (req, res) => {
     try {
       const eventId = req.params.id;
-      const data = req.body;
-      await firestore.collection('events').doc(eventId).update(data);
+      const eventData = req.body;
+      if (req.file) {
+
+        // Upload image to Cloudinary
+        const cloudinaryResult = await cloudinary.uploader.upload(req.file.path);
+        eventData.image_url = cloudinaryResult.secure_url;
+      }
+
+      await firestore.collection('events').doc(eventId).update(eventData);
       res.send('Event Updated');
     } catch (error) {
       res.status(400).send(error.message);
