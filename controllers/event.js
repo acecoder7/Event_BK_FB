@@ -19,10 +19,10 @@ cloudinary.config({
 export const addEvent = async (req, res) => {
     try{
         const eventData = req.body;
-        const image = req.files.image;
-        // Upload image to Cloudinary
-        const cloudinaryResult = await cloudinary.uploader.upload(image.path);
-        eventData.image_url = cloudinaryResult.secure_url;
+        const myCloud = await cloudinary.v2.uploader.upload(req.body.image_url, {
+            folder: "AI_Club-Events",
+        });
+        eventData.image_url = myCloud.secure_url;
 
         await firestore.collection('events').doc().set(eventData);
         res.send('Event Added');
@@ -88,12 +88,10 @@ export const updateEvent = async (req, res) => {
     try {
       const eventId = req.params.id;
       const eventData = req.body;
-      if (req.file) {
-
-        // Upload image to Cloudinary
-        const cloudinaryResult = await cloudinary.uploader.upload(req.file.path);
-        eventData.image_url = cloudinaryResult.secure_url;
-      }
+      const myCloud = await cloudinary.v2.uploader.upload(req.body.image_url, {
+        folder: "AI_Club-Events",
+      });
+      eventData.image_url = myCloud.secure_url;
 
       await firestore.collection('events').doc(eventId).update(eventData);
       res.send('Event Updated');
